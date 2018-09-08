@@ -29,5 +29,10 @@ module wxgame {
 				}
 			})
 		}
+
+		/**时间戳 做版本控制 */
+		public static getVersionControlCode(): string {
+			return "?v=" + new Date().getTime();
+		}
 	}
 }

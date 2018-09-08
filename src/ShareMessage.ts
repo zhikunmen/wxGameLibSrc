@@ -100,7 +100,7 @@ module wxgame {
 			return new Promise((resolve, reject) => {
 				wx.shareAppMessage({
 					title: shareVo.title,
-					imageUrl: shareVo.shareImageUrl,
+					imageUrl: shareVo.shareImageUrl + Utils.getVersionControlCode(),
 					query: query,
 					success: (res) => {
 						if (success)

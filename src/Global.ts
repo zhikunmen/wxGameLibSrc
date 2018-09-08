@@ -75,14 +75,14 @@ module wxgame {
 		}
 
 		/**跳转客服回话 */
-		async openCustomerServiceConversation() {
+		async openCustomerServiceConversation(showCard: boolean, title: string = CustomerServiceConst.DEFAULTTITLE, imgUrl?: string) {
 			return new Promise((resolve, reject) => {
 				wx.openCustomerServiceConversation({
 					sessionFrom: "",
 					showMessageCard: true,
-					sendMessageTitle: "好彩跑得快",
+					sendMessageTitle: title,
 					sendMessagePath: "",
-					sendMessageImg: "https://wx.qlogo.cn/mmopen/vi_32/etCUHvzICyicwibVgJw0bn1p9zExsBHBCQicpjTNwVXpGtnG3TVTz2w7Rq0QDibVEYMUNULXwf3wn1Mna75xbAehhw/132",
+					sendMessageImg: imgUrl + Utils.getVersionControlCode(),
 					success: (res) => { resolve(res) },
 					fail: (err) => { reject(err) }
 				})

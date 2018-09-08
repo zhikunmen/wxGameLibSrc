@@ -8,4 +8,9 @@ module wxgame {
 		/**正式版 */
 		static RELEASE = "release";
 	}
+
+	export class CustomerServiceConst {
+		/**跳转客服默认标题 */
+		static DEFAULTTITLE = "回复\"关注\"获取关注链接";
+	}
 }
