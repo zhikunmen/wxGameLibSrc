@@ -99,8 +99,8 @@ module wxgame {
 			shareVo.opType = Cmd.ShareOpType.share;
 			return new Promise((resolve, reject) => {
 				wx.shareAppMessage({
-					title: shareVo.title,
-					imageUrl: shareVo.shareImageUrl + Utils.getVersionControlCode(),
+					title: title,
+					imageUrl: imageUrl.match(/https/ig).length > 0 ? imageUrl + Utils.getVersionControlCode() : imageUrl,
 					query: query,
 					success: (res) => {
 						if (success)

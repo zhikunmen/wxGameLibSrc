@@ -82,7 +82,7 @@ module wxgame {
 					showMessageCard: true,
 					sendMessageTitle: title,
 					sendMessagePath: "",
-					sendMessageImg: imgUrl + Utils.getVersionControlCode(),
+					sendMessageImg: imgUrl.match(/https/ig).length > 0 ? imgUrl + Utils.getVersionControlCode() : imgUrl,
 					success: (res) => { resolve(res) },
 					fail: (err) => { reject(err) }
 				})
