@@ -2,7 +2,7 @@ module wxgame {
 	export class Message {
 		private static _instance: Message;
 		public key: Array<string>;
-		public launchOption: LaunchOptions;
+		public launchOption: any;
 		public static get instance(): Message {
 			if (!this._instance)
 				this._instance = new Message();
@@ -29,6 +29,8 @@ module wxgame {
 			shareVo.opType = Cmd.ShareOpType.click
 			if (query.shareType)
 				shareVo.shareType = Number(query.shareType);
+			if (query.wgKvData)
+				shareVo.wgKvData = query.wgKvData;
 			if (query && query.uid) {
 				shareVo.fromUid = Number(query.uid);
 				if (data.shareTicket) {//群分享
@@ -38,18 +40,20 @@ module wxgame {
 							ShareMessage.instance.sendShareMessage(shareVo);
 						}
 					}).catch((e => {
-						console.log("获取群消息失败",e)
+						console.log("获取群消息失败", e)
 						uniLib.TipsUtils.showTipsDownToUp("获取群消息失败");
 					}))
 				} else {//个人分享
 					ShareMessage.instance.sendShareMessage(shareVo);
 				}
 			}
+			this.launchOption = null;
 		}
 		/**监听小游戏回到前台的事件 */
 		private addOnShowEvent(): void {
 			wx.onShow((res: LaunchOptions) => {
-				this.launchOption = res;
+				if (!this.launchOption)
+					this.launchOption = res;
 				this.initLaunchOption();
 			})
 		}
@@ -58,7 +62,7 @@ module wxgame {
 
 		private _rankBit: egret.Bitmap;
 		/**设置用户数据上报 */
-		public setUserCloudStorage(KVDataList: Array<KVData>) {
+		public setUserCloudStorage(KVDataList: Array<any>) {
 			return new Promise((resolve, reject) => {
 				wx.setUserCloudStorage({
 					KVDataList: KVDataList,

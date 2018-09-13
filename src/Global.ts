@@ -5,6 +5,7 @@ module wxgame {
 		public secret: string;
 		private userInfoData: wgUserInfoData;
 		public tableLobbyGameList: table.TableLobbyGameList
+		public shareIconUrl: string;
 		public static get instance() {
 			if (!this._instance)
 				this._instance = new Global();
@@ -15,7 +16,10 @@ module wxgame {
 		 * @param secret 小游戏秘钥
 		 */
 		async init(): Promise<any> {
+			if(!Utils.isWxGame)//不是小游戏直接退出
+				return;
 			Message.instance.init();
+			ShareMessage.instance.showShareMenu(true);
 			return new Promise((resolve, reject) => {
 				wx.login({
 					success: (code) => {
@@ -31,32 +35,11 @@ module wxgame {
 				})
 			})
 		}
-		/**获取用户消息 例如头像 昵称等 */
-		async getUserInfo(): Promise<any> {
-			return new Promise((resolve, reject) => {
-				wx.getUserInfo({
-					withCredentials: true,
-					success: (res: wgUserInfoData) => { this.userInfoData = res; resolve(res.userInfo) },
-					fail: (err) => { reject(err) }
-				})
-			})
-		}
-		/**
-		 * @param jscode login回调成功的code
-		 */
-		private getSessionKeyOpenId(jscode: string) {
-			let wxUrl = "https://api.weixin.qq.com/sns/jscode2session?appid=" + this.appId + "&secret=" + this.secret + "&js_code=" + jscode + "&grant_type=authorization_code"
-			let req = new egret.URLRequest(wxUrl);
-			req.method = egret.URLRequestMethod.GET;
-			let loader = new egret.URLLoader(req);
-			loader.addEventListener(egret.Event.COMPLETE, (data: egret.Event) => {
-				console.log("getSessionKeyOpenId   ");
-				console.info(data);
-			}, this);
-		}
 
 		/**退出当前小游戏 */
 		async exitMiniProgram(success?: Function, fail?: Function, complete?: Function): Promise<any> {
+			if(!Utils.isWxGame)//不是小游戏直接退出
+				return;
 			return new Promise((resolve, reject) => {
 				wx.exitMiniProgram({
 					success: () => {
@@ -76,13 +59,15 @@ module wxgame {
 
 		/**跳转客服回话 */
 		async openCustomerServiceConversation(showCard: boolean, title: string = CustomerServiceConst.DEFAULTTITLE, imgUrl?: string) {
+			if(!Utils.isWxGame)//不是小游戏直接退出
+				return;
 			return new Promise((resolve, reject) => {
 				wx.openCustomerServiceConversation({
 					sessionFrom: "",
 					showMessageCard: true,
 					sendMessageTitle: title,
 					sendMessagePath: "",
-					sendMessageImg: imgUrl.match(/https/ig).length > 0 ? imgUrl + Utils.getVersionControlCode() : imgUrl,
+					sendMessageImg: imgUrl ? (imgUrl.match(/https/ig).length > 0 ? imgUrl + Utils.getVersionControlCode() : imgUrl) : "",
 					success: (res) => { resolve(res) },
 					fail: (err) => { reject(err) }
 				})

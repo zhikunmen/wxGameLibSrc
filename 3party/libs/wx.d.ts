@@ -2899,6 +2899,7 @@ interface shareQuery {
     uid: number;
     shareType: number;
     roomId: number;
+    wgKvData:string;//扩展字段
 }
 
 interface wgUserInfo {

@@ -9,6 +9,8 @@ module wxgame {
 		private _openDataContext: OpenDataContext;
 
 		public sendShareData(kvdata: any): void {
+			if(!Utils.isWxGame)//不是小游戏直接退出
+				return;
 			this._openDataContext = wx.getOpenDataContext();
 			this._openDataContext.postMessage(kvdata);//在Message onMessage里获取
 		}

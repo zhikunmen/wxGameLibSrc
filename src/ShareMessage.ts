@@ -58,10 +58,8 @@ module wxgame {
 			})
 		}
 		/**
-		 * 消息分享
-		 * @param title 分享标题
-		 * @param imageUrl 分享图片url
-		 * @param query 查询字符串 从这条转发消息进入后，可通过 wx.getLaunchInfoSync() 或 wx.onShow() 获取启动参数中的 query。
+		 * 消息分享 如果写死分享的话务必填写shareVo.title和shareVo.shareImageUrl
+		 * @param shareVo 分享数据
 		 */
 		async shareAppMessage(shareVo: uniLib.WXShareVo, success?: Function, fail?: Function): Promise<any> {
 			let title = "";
@@ -82,8 +80,12 @@ module wxgame {
 			if (shareVo.shareImageUrl) {//如果传了image
 				imageUrl = shareVo.shareImageUrl;
 			} else {
-				if (random)
-					imageUrl = table.newsharepicture[random];
+				if (random && Global.instance.shareIconUrl) {
+					if (Global.instance.shareIconUrl[Global.instance.shareIconUrl.length - 1] != "/") {
+						Global.instance.shareIconUrl += "/";
+					}
+					imageUrl = Global.instance.shareIconUrl + "shareIcons/" + table.newsharepicture[random];
+				}
 				else
 					uniLib.TipsUtils.showTipsDownToUp("分享图片配置有误");
 			}
@@ -96,13 +98,17 @@ module wxgame {
 				if (obj && obj.roomId)
 					query += "&roomId=" + obj.roomId
 			}
+			if (shareVo.wgKvData) {
+				query += "&wgKvData=" + shareVo.wgKvData;
+			}
 			shareVo.opType = Cmd.ShareOpType.share;
 			return new Promise((resolve, reject) => {
 				wx.shareAppMessage({
 					title: title,
-					imageUrl: imageUrl.match(/https/ig).length > 0 ? imageUrl + Utils.getVersionControlCode() : imageUrl,
+					imageUrl: (Array.isArray(imageUrl.match(/http/ig)) && imageUrl.match(/http/ig).length > 0) ? imageUrl + Utils.getVersionControlCode() : imageUrl,
 					query: query,
 					success: (res) => {
+						console.log(res);
 						if (success)
 							success();
 						if (res) {
@@ -117,6 +123,7 @@ module wxgame {
 									uniLib.TipsUtils.showTipsDownToUp("获取群分享消息出错");
 								});
 							} else {//分享的是个人
+								console.log("分享的是个人");
 								this.sendShareMessage(shareVo);
 							}
 						}
@@ -152,7 +159,7 @@ module wxgame {
 		 * @param jsonShare 是否分享群
 		 *  */
 		public sendShareMessage(shareVo?: uniLib.WXShareVo): void {
-			if (this._data) {//预留上次没发送成功的信息 在登陆上后再发一遍
+			if (this._data || !shareVo) {//预留上次没发送成功的信息 在登陆上后再发一遍
 				this.sendShare();
 				return;
 			}
@@ -172,8 +179,8 @@ module wxgame {
 		}
 
 		private sendShare() {
-			if (uniLib.NetMgr.ws && this._data) {
-				uniLib.NetMgr.tcpSend(this._data);
+			if (NetMgr.ws && this._data) {
+				NetMgr.tcpSend(this._data);
 				this._data = null;
 			}
 		}

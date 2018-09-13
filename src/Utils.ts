@@ -34,5 +34,14 @@ module wxgame {
 		public static getVersionControlCode(): string {
 			return "?v=" + new Date().getTime();
 		}
+
+		/**检查当前是否是微信小游戏 不能导致h5上报错 */
+		public static get isWxGame(): boolean{
+			if(!uniLib.Global.isWxGame()){
+				console.warn("当前测试环境不是微信小游戏，导致功能失效")
+				return false; 
+			}
+			return true;
+		}
 	}
 }
