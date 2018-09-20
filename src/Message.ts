@@ -29,8 +29,8 @@ module wxgame {
 			shareVo.opType = Cmd.ShareOpType.click
 			if (query.shareType)
 				shareVo.shareType = Number(query.shareType);
-			if (query.wgKvData)
-				shareVo.wgKvData = query.wgKvData;
+			if (query.wgShareData)
+				shareVo.wgShareData = query.wgShareData;
 			if (query && query.uid) {
 				shareVo.fromUid = Number(query.uid);
 				if (data.shareTicket) {//群分享
@@ -51,6 +51,7 @@ module wxgame {
 		}
 		/**监听小游戏回到前台的事件 */
 		private addOnShowEvent(): void {
+			wx.offShow(null);
 			wx.onShow((res: LaunchOptions) => {
 				if (!this.launchOption)
 					this.launchOption = res;
@@ -69,7 +70,6 @@ module wxgame {
 					success: (res) => {
 						console.log("setUserCloudStorage success", res);
 						resolve(res);
-						OpenData.instance.sendShareData({ command: "open", type: "friend" });
 					},
 					fail: (res) => {
 						console.error("setUserCloudStorage success", res);

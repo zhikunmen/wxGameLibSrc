@@ -1,6 +1,6 @@
 /*!
  * uniLib - d.ts for Description
- * @licence uniLib - v0.1.0 (2018-09-05)
+ * @licence uniLib - v0.1.0 (2018-09-17)
  * qq:93749937 | Licence: helojo
  */
 declare class Howl {
@@ -681,6 +681,10 @@ declare module Pmd {
          * YY游戏
          */
         PlatType_YYGame = 302,
+        /**
+         * 微信小游戏支付
+         */
+        PlatType_WEIXIN = 326,
     }
     /**
      * 玩家在线状态
@@ -5411,9 +5415,13 @@ declare module uniLib {
          */
         CdnDomains: string[];
         /**
-         * 游戏加载远程路径
+         * 子游戏加载远程路径
          */
         gameRemotePaths: string[];
+        /**
+         * 项目加载远程路径
+         */
+        projectRemotePaths: string[];
         /**
          * 消息发出超时时间
          */
@@ -5512,6 +5520,7 @@ declare module uniLib {
         static isInGame: boolean;
         static reLoginUrl: string;
         static CdnDomains: string[];
+        static projectRemotePaths: string[];
         static payPlatId: number;
         /**
         * 苹果bundleId
@@ -7403,7 +7412,8 @@ declare module uniLib {
         private _err;
         private _this;
         private isOriType;
-        constructor(callBack?: Function, err?: Function, thisObj?: any);
+        private _reqType;
+        constructor(callBack?: Function, err?: Function, thisObj?: any, reqType?: string);
         open(url: string, data?: any, isFormData?: boolean): void;
         private _dtype;
         dataFormat: string;
@@ -7592,6 +7602,27 @@ declare module uniLib {
 }
 
 declare module uniLib {
+    class UniThemeAdapter implements eui.IThemeAdapter {
+        /**
+         * 解析主题
+         * @param url 待解析的主题url
+         * @param onSuccess 解析完成回调函数，示例：compFunc(e:egret.Event):void;
+         * @param onError 解析失败回调函数，示例：errorFunc():void;
+         * @param thisObject 回调的this引用
+         */
+        getTheme(url: string, onSuccess: Function, onError: Function, thisObject: any): void;
+    }
+}
+declare var generateEUI: {
+    paths: string[];
+    skins: any;
+};
+declare var generateEUI2: {
+    paths: string[];
+    skins: any;
+};
+
+declare module uniLib {
     class UniVersionController {
         private _versionInfo;
         private _versionPath;
@@ -7744,10 +7775,11 @@ declare module uniLib {
         shareImageData: string;
         roomId: string;
         wgKvData: string;
-        shareType: Cmd.ShareType;
-        opType: Cmd.ShareOpType;
+        shareType: any;
+        opType: any;
         shareTicket: string;
         fromUid: number;
+        wgShareData: string;
         constructor();
     }
 }
@@ -8406,7 +8438,7 @@ declare module uniLib {
      * @param onError 解析失败回调函数，示例：errorFunc():void;
      * @param thisObject 回调的this引用
      */
-        static getTheme(url: string, onSuccess: Function, onError: Function, thisObject: any, thmType?: string): void;
+        static getTheme(url: string, onSuccess: Function, onError: Function, thisObject: any, cdnDomain?: string, thmType?: string): void;
         /**
          * @private
          *

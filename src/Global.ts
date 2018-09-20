@@ -67,7 +67,7 @@ module wxgame {
 					showMessageCard: true,
 					sendMessageTitle: title,
 					sendMessagePath: "",
-					sendMessageImg: imgUrl ? (imgUrl.match(/https/ig).length > 0 ? imgUrl + Utils.getVersionControlCode() : imgUrl) : "",
+					sendMessageImg: imgUrl ? (imgUrl.match(/http/ig).length > 0 ? imgUrl + Utils.getVersionControlCode() : imgUrl) : "",
 					success: (res) => { resolve(res) },
 					fail: (err) => { reject(err) }
 				})
@@ -84,6 +84,16 @@ module wxgame {
 					envVersion: envVersion,
 					success: (res) => { resolve(res) },
 					fail: (err) => { console.error("navigateToMiniProgram fail"); reject(err) }
+				})
+			})
+		}
+
+		/**调用设置交口 */
+		async openSetting(): Promise<any>{
+			return new Promise((resolve,reject)=>{
+				wx.openSetting({
+					success : (res)=>{resolve(res)},
+					fail:(error)=>{reject(error);console.log("打开设置失败")}
 				})
 			})
 		}

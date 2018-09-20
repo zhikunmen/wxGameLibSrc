@@ -11,6 +11,18 @@ module wxgame {
 		/**监听被动转发 */
 		public onShareAppMessage(title: string = "", imageUrl: string = "", query: string = "") {
 			wx.onShareAppMessage((e) => {
+				if (!title || title.trim() == "") {
+					let random;
+					let table = Global.instance.tableLobbyGameList;
+					if (table && Array.isArray(table.newshareContent)) {
+						random = Math.floor(Math.random() * table.newshareContent.length);
+						title = table.newshareContent[random];
+						if (Global.instance.shareIconUrl[Global.instance.shareIconUrl.length - 1] != "/") {
+							Global.instance.shareIconUrl += "/";
+						}
+						imageUrl = Global.instance.shareIconUrl + "shareIcons/" + table.newsharepicture[random];
+					}
+				}
 				console.log("用户点击事件");
 				return {
 					title: title,
@@ -72,7 +84,7 @@ module wxgame {
 			if (shareVo.title) {//如果传了title
 				title = shareVo.title;
 			} else {
-				if (random)
+				if (!isNaN(random))
 					title = table.newshareContent[random];
 				else
 					uniLib.TipsUtils.showTipsDownToUp("分享标题配置有误");
@@ -80,7 +92,7 @@ module wxgame {
 			if (shareVo.shareImageUrl) {//如果传了image
 				imageUrl = shareVo.shareImageUrl;
 			} else {
-				if (random && Global.instance.shareIconUrl) {
+				if (!isNaN(random) && Global.instance.shareIconUrl) {
 					if (Global.instance.shareIconUrl[Global.instance.shareIconUrl.length - 1] != "/") {
 						Global.instance.shareIconUrl += "/";
 					}
@@ -98,8 +110,8 @@ module wxgame {
 				if (obj && obj.roomId)
 					query += "&roomId=" + obj.roomId
 			}
-			if (shareVo.wgKvData) {
-				query += "&wgKvData=" + shareVo.wgKvData;
+			if (shareVo.wgShareData) {
+				query += "&wgShareData=" + shareVo.wgShareData;
 			}
 			shareVo.opType = Cmd.ShareOpType.share;
 			return new Promise((resolve, reject) => {
@@ -158,8 +170,27 @@ module wxgame {
 		 * @param opType  操作类型
 		 * @param jsonShare 是否分享群
 		 *  */
-		public sendShareMessage(shareVo?: uniLib.WXShareVo): void {
+		async sendShareMessage(shareVo?: uniLib.WXShareVo): Promise<any> {
+			let code;
+			await this.checkSession().then((res) => { },//未过期不做处理
+				(res) => {//过期再那一边登陆code
+					Global.instance.init().then((res) => {
+						code = res;
+					})
+				})
 			if (this._data || !shareVo) {//预留上次没发送成功的信息 在登陆上后再发一遍
+				if (code) {
+					if (this._data && this._data.shareType && this._data.shareType == Cmd.ShareType.ios) {
+						let obj = {};
+						if (this._data.extData) {
+							obj = JSON.parse(this._data.extData);
+							obj["code"] = code;
+						} else {
+							obj["code"] = code;
+						}
+						this._data.extData = JSON.stringify(obj);
+					}
+				}
 				this.sendShare();
 				return;
 			}
@@ -173,9 +204,30 @@ module wxgame {
 			if (shareVo.shareTicket)//小游戏群分享tickets
 				req.jsonShare = shareVo.shareTicket
 			if (shareVo.wgKvData)//小游戏游戏附带数据
-				req.extData = shareVo.wgKvData
+				req.extData = shareVo.wgKvData;
+			if (shareVo.wgShareData)//带给服务器的数据
+				req.extData = shareVo.wgShareData;
+			if (req.shareType && req.shareType == Cmd.ShareType.ios && code) {
+				let obj = {};
+				if (req.extData) {
+					obj = JSON.parse(req.extData);
+					obj["code"] = code;
+				} else {
+					obj["code"] = code;
+				}
+				req.extData = JSON.stringify(obj);
+			}
 			this._data = req;
 			this.sendShare();
+		}
+
+		async checkSession(): Promise<any> {
+			return new Promise((resolve, reject) => {
+				wx.checkSession({
+					success: (res) => { resolve(res) },//登录态未过期
+					fail: (res) => { reject(res) }//登陆过期
+				});
+			})
 		}
 
 		private sendShare() {
