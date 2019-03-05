@@ -12,6 +12,7 @@ module wxgame {
 			this.launchOption = wx.getLaunchOptionsSync();
 			this.initLaunchOption();
 			this.addOnShowEvent();
+			this.onMemoryWarning();
 		}
 
 		/**
@@ -51,15 +52,17 @@ module wxgame {
 		}
 		/**监听小游戏回到前台的事件 */
 		private addOnShowEvent(): void {
-			wx.offShow(null);
-			wx.onShow((res: LaunchOptions) => {
-				if (!this.launchOption)
-					this.launchOption = res;
-				this.initLaunchOption();
-			})
+			wx.offShow((res) => { this.onShow(res) });
+			wx.onShow((res) => { this.onShow(res) })
 		}
 
-
+		/** */
+		private onShow(res?: LaunchOptions) {
+			wx.setKeepScreenOn({ keepScreenOn: true })
+			if (!this.launchOption && res)
+				this.launchOption = res;
+			this.initLaunchOption();
+		}
 
 		private _rankBit: egret.Bitmap;
 		/**设置用户数据上报 */
@@ -77,6 +80,29 @@ module wxgame {
 					}
 				})
 			})
+		}
+		/**
+		 * 内存警报 建立在fundebug第三方工具上  让服务器做怕是觉得有压力
+		 * */
+		private onMemoryWarning() {
+			if (!Utils.isIos) {//目前只有安卓可以监听到  只监听内存严重事件
+				wx.onMemoryWarning((res) => {
+					if (res && res.level) {
+						switch (res.level) {
+							case 5://内存正常
+								break;
+							case 10://内存较低
+								console.warn("内存较低" + res.level);
+								break;
+							case 15://内存严重
+								console.warn("内存严重" + res.level);
+								// if(window["fundebug"])
+								// 	window["fundebug"].notify("内存警报", "内存严重");
+								break;
+						}
+					}
+				})
+			}
 		}
 	}
 }

@@ -2,6 +2,7 @@ module wxgame {
 	export class ShareMessage {
 		private static _instance: ShareMessage;
 		private _data: Cmd.UploadShareInfoLittleGameLobbyCmd_CS;
+		private _lastTimeOutSec;
 		public static get instance() {
 			if (!this._instance)
 				this._instance = new ShareMessage();
@@ -74,6 +75,10 @@ module wxgame {
 		 * @param shareVo 分享数据
 		 */
 		async shareAppMessage(shareVo: uniLib.WXShareVo, success?: Function, fail?: Function): Promise<any> {
+			if (uniLib.Global.isInGame) {
+				this._lastTimeOutSec = uniLib.Global.msgTimeOutSec;
+				uniLib.Global.msgTimeOutSec = 120;
+			}
 			let title = "";
 			let imageUrl = "";
 			let random;
@@ -89,8 +94,9 @@ module wxgame {
 				else
 					uniLib.TipsUtils.showTipsDownToUp("分享标题配置有误");
 			}
-			if (shareVo.shareImageUrl) {//如果传了image
-				imageUrl = shareVo.shareImageUrl;
+			if (shareVo.shareImageUrl || shareVo.shareImageData) {//如果传了image
+				shareVo.shareImageUrl ? (imageUrl = shareVo.shareImageUrl) : (imageUrl = shareVo.shareImageData)
+				console.log("imageUrl:" + JSON.stringify(imageUrl));
 			} else {
 				if (!isNaN(random) && Global.instance.shareIconUrl) {
 					if (Global.instance.shareIconUrl[Global.instance.shareIconUrl.length - 1] != "/") {
@@ -114,35 +120,40 @@ module wxgame {
 				query += "&wgShareData=" + shareVo.wgShareData;
 			}
 			shareVo.opType = Cmd.ShareOpType.share;
+			if (success)
+				success();
+			this.sendShareMessage(shareVo);
 			return new Promise((resolve, reject) => {
 				wx.shareAppMessage({
 					title: title,
 					imageUrl: (Array.isArray(imageUrl.match(/http/ig)) && imageUrl.match(/http/ig).length > 0) ? imageUrl + Utils.getVersionControlCode() : imageUrl,
 					query: query,
 					success: (res) => {
+						this.resetTimeSec();
 						console.log(res);
 						if (success)
 							success();
 						if (res) {
 							if (res.shareTickets && res.shareTickets.length > 0) {//分享的是群
-								this.getShareInfo(res.shareTickets[0]).then((data) => {
-									if (data) {
-										shareVo.shareTicket = JSON.stringify(data);
-										this.sendShareMessage(shareVo);
-									}
-								}).catch(e => {
-									console.log("获取群分享消息出错", e);
-									uniLib.TipsUtils.showTipsDownToUp("获取群分享消息出错");
-								});
+								// this.getShareInfo(res.shareTickets[0]).then((data) => {
+								// 	if (data) {
+								// 		shareVo.shareTicket = JSON.stringify(data);
+								// 		this.sendShareMessage(shareVo);
+								// 	}
+								// }).catch(e => {
+								// 	console.log("获取群分享消息出错", e);
+								// 	uniLib.TipsUtils.showTipsDownToUp("获取群分享消息出错");
+								// });
 							} else {//分享的是个人
 								console.log("分享的是个人");
-								this.sendShareMessage(shareVo);
+								// this.sendShareMessage(shareVo);
 							}
 						}
 						uniLib.TipsUtils.showTipsDownToUp("分享成功");
 						resolve(res)
 					},
 					fail: (res) => {
+						this.resetTimeSec();
 						if (fail)
 							fail();
 						uniLib.TipsUtils.showTipsDownToUp("分享失败");
@@ -172,12 +183,13 @@ module wxgame {
 		 *  */
 		async sendShareMessage(shareVo?: uniLib.WXShareVo): Promise<any> {
 			let code;
-			await this.checkSession().then((res) => { },//未过期不做处理
-				(res) => {//过期再那一边登陆code
-					Global.instance.init().then((res) => {
-						code = res;
-					})
-				})
+			await Global.instance.init().then((res) => { if (res.errMsg.indexOf("ok") >= 0) code = res.code }, () => { egret.error("sendShareMessage reject") });
+			// await this.checkSession().then((res) => { },//未过期不做处理
+			// 	(res) => {//过期再那一边登陆code
+			// 		Global.instance.init().then((res) => {
+			// 			code = res;
+			// 		})
+			// 	})
 			if (this._data || !shareVo) {//预留上次没发送成功的信息 在登陆上后再发一遍
 				if (code) {
 					if (this._data && this._data.shareType && this._data.shareType == Cmd.ShareType.ios) {
@@ -234,6 +246,12 @@ module wxgame {
 			if (NetMgr.ws && this._data) {
 				NetMgr.tcpSend(this._data);
 				this._data = null;
+			}
+		}
+		/**回滚游戏压后台时间 */
+		private resetTimeSec() {
+			if (uniLib.Global.isInGame && this._lastTimeOutSec) {
+				uniLib.Global.msgTimeOutSec = this._lastTimeOutSec;
 			}
 		}
 	}
